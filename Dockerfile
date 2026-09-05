@@ -16,15 +16,10 @@ RUN apt-get update && \
     iproute2 \
     iputils-ping \
     procps \
-    systemd && \
-    rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /run/sshd
-
-RUN useradd -m -s /bin/bash admin && \
-    echo "admin:ChangeMe123!" | chpasswd && \
-    usermod -aG sudo admin
+RUN mkdir -p /run/sshd /root/.ssh
 
 EXPOSE 22
 
-CMD ["/usr/sbin/sshd", "-D"]
+CMD ["/usr/sbin/sshd", "-D", "-e"]
