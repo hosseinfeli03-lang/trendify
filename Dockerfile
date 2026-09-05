@@ -1,0 +1,8 @@
+FROM ghcr.io/mhsanaei/3x-ui:v3.7.0
+
+ENV XRAY_VMESS_AEAD_FORCED=false
+ENV XUI_ENABLE_FAIL2BAN=true
+
+EXPOSE 2053
+
+CMD ["x-ui"]
