@@ -1,8 +1,30 @@
-FROM ghcr.io/mhsanaei/3x-ui:v3.7.0
+FROM ubuntu:24.04
 
-ENV XRAY_VMESS_AEAD_FORCED=false
-ENV XUI_ENABLE_FAIL2BAN=true
+ENV DEBIAN_FRONTEND=noninteractive
 
-EXPOSE 2053
+RUN apt-get update && \
+    apt-get install -y \
+    openssh-server \
+    sudo \
+    curl \
+    wget \
+    git \
+    nano \
+    vim \
+    ca-certificates \
+    net-tools \
+    iproute2 \
+    iputils-ping \
+    procps \
+    systemd && \
+    rm -rf /var/lib/apt/lists/*
 
-CMD ["x-ui"]
+RUN mkdir -p /run/sshd
+
+RUN useradd -m -s /bin/bash admin && \
+    echo "admin:ChangeMe123!" | chpasswd && \
+    usermod -aG sudo admin
+
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]
