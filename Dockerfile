@@ -1,17 +1,39 @@
-FROM ghcr.io/mhsanaei/3x-ui:v3.7.0
+FROM ubuntu:24.04
 
-ENV XUI_DB_TYPE=sqlite
-ENV XUI_DB_FOLDER=/data/x-ui
-ENV XUI_ENABLE_FAIL2BAN=false
+ENV DEBIAN_FRONTEND=noninteractive
 ENV XRAY_VMESS_AEAD_FORCED=false
-ENV XUI_INIT_WEB_BASE_PATH=/
+ENV XUI_ENABLE_FAIL2BAN=false
 
-RUN mkdir -p /data/x-ui /run/sshd /root/.ssh
+RUN apt-get update && \
+    apt-get install -y \
+    openssh-server \
+    sudo \
+    curl \
+    wget \
+    ca-certificates \
+    tar \
+    procps \
+    iproute2 \
+    net-tools \
+    nano \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /run/sshd /root/.ssh /data/x-ui
+
+RUN cd /tmp && \
+    wget -q https://github.com/MHSanaei/3x-ui/releases/download/v3.7.0/x-ui-linux-amd64.tar.gz && \
+    tar -xzf x-ui-linux-amd64.tar.gz && \
+    mv x-ui /usr/local/x-ui && \
+    chmod +x /usr/local/x-ui/x-ui && \
+    chmod +x /usr/local/x-ui/bin/xray-linux-amd64 && \
+    rm -f /tmp/x-ui-linux-amd64.tar.gz
 
 COPY start-railway.sh /usr/local/bin/start-railway.sh
 
 RUN chmod +x /usr/local/bin/start-railway.sh
 
+EXPOSE 22
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/start-railway.sh"]
