@@ -1,99 +1,50 @@
-FROM ubuntu:24.04
+FROM ghcr.io/mhsanaei/3x-ui:v3.7.0
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV XRAY_VMESS_AEAD_FORCED=false
+ENV XUI_DB_TYPE=sqlite
+ENV XUI_DB_FOLDER=/data/x-ui
 ENV XUI_ENABLE_FAIL2BAN=false
+ENV XRAY_VMESS_AEAD_FORCED=false
+ENV XUI_INIT_WEB_BASE_PATH=/
 
 RUN apt-get update && \
-    apt-get install -y \
-    openssh-server \
-    sudo \
-    curl \
-    wget \
-    git \
-    nano \
-    vim \
-    ca-certificates \
-    net-tools \
-    iproute2 \
-    iputils-ping \
-    procps \
-    tar \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -y openssh-server sudo curl wget nano vim procps iproute2 net-tools ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /run/sshd /root/.ssh
 
-# SSH
-RUN mkdir -p /run/sshd /root/.ssh
-
-# Install 3X-UI v3.7.0
-RUN cd /tmp && \
-    wget -q https://github.com/MHSanaei/3x-ui/releases/download/v3.7.0/x-ui-linux-amd64.tar.gz && \
-    tar -xzf x-ui-linux-amd64.tar.gz && \
-    chmod +x x-ui/x-ui x-ui/bin/xray-linux-* x-ui/x-ui.sh && \
-    rm -rf /usr/local/x-ui /usr/bin/x-ui && \
-    mv x-ui /usr/local/x-ui && \
-    cp /usr/local/x-ui/x-ui.sh /usr/bin/x-ui && \
-    rm -f /tmp/x-ui-linux-amd64.tar.gz
-
-# Startup script
-RUN cat > /usr/local/bin/start.sh <<'EOF'
+RUN cat > /usr/local/bin/start-railway.sh <<'EOF'
 #!/bin/bash
 set -e
 
-echo "======================================"
-echo " Starting Railway 3X-UI container"
-echo "======================================"
-
-# Railway persistent volume
 mkdir -p /data/x-ui
 
-# First boot: move existing database/config to persistent volume
-if [ ! -f /data/x-ui/x-ui.db ] && [ -f /etc/x-ui/x-ui.db ]; then
-    echo "Copying existing x-ui database to /data..."
-    cp -a /etc/x-ui/. /data/x-ui/
-fi
+# Keep Railway PORT as the 3X-UI web port
+PORT="${PORT:-8080}"
 
-# Keep the path expected by 3X-UI
-rm -rf /etc/x-ui
-ln -s /data/x-ui /etc/x-ui
+echo "Starting 3X-UI on port ${PORT}"
 
-mkdir -p /etc/x-ui
-
-# Railway gives the HTTP port through $PORT
-if [ -n "$PORT" ]; then
-    echo "Setting 3X-UI panel port to Railway PORT=$PORT"
-    /usr/local/x-ui/x-ui setting -port "$PORT" || true
-fi
-
-# Disable Fail2ban in container environment
-export XRAY_VMESS_AEAD_FORCED=false
-export XUI_ENABLE_FAIL2BAN=false
+# Configure panel
+/usr/local/x-ui/x-ui setting -port "$PORT" || true
+/usr/local/x-ui/x-ui setting -listenIP "0.0.0.0" || true
 
 cd /usr/local/x-ui
 
-echo "Starting 3X-UI..."
+# Start 3X-UI
 ./x-ui &
 XUI_PID=$!
 
-sleep 3
-
-echo "3X-UI PID: $XUI_PID"
-
-echo "Starting SSH..."
+# Start SSH
 /usr/sbin/sshd -D -e &
 SSH_PID=$!
 
-echo "SSH PID: $SSH_PID"
+echo "3X-UI PID: ${XUI_PID}"
+echo "SSH PID: ${SSH_PID}"
 
-wait -n "$XUI_PID" "$SSH_PID"
-
-echo "A main process exited."
-exit 1
+wait "$XUI_PID"
 EOF
 
-RUN chmod +x /usr/local/bin/start.sh
+RUN chmod +x /usr/local/bin/start-railway.sh
 
-# Railway HTTP panel + SSH
 EXPOSE 22
-EXPOSE 2053
+EXPOSE 8080
 
-ENTRYPOINT ["/usr/local/bin/start.sh"]
+ENTRYPOINT ["/usr/local/bin/start-railway.sh"]
