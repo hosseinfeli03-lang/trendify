@@ -8,7 +8,10 @@ echo "======================================"
 mkdir -p /data/x-ui
 chmod 700 /data/x-ui
 
-PUBLIC_PORT="${PORT:-8080}"
+# Railway HTTP service port
+PUBLIC_PORT="8080"
+
+# Internal 3X-UI panel
 PANEL_PORT="8081"
 
 echo "Public Port: ${PUBLIC_PORT}"
@@ -59,6 +62,7 @@ echo "======================================"
 echo " 3X-UI : ${PANEL_PORT}"
 echo " Nginx : ${PUBLIC_PORT}"
 echo " Xray  : 10001 /vless"
+echo " Xray  : 21660 / Reality"
 echo "======================================"
 
 wait $XUI_PID
