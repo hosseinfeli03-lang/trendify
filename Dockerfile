@@ -17,6 +17,7 @@ RUN apt-get update && \
     net-tools \
     nano \
     vim \
+    nginx \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /run/sshd /root/.ssh /data/x-ui
@@ -29,6 +30,7 @@ RUN cd /tmp && \
     chmod +x /usr/local/x-ui/bin/xray-linux-amd64 && \
     rm -f /tmp/x-ui-linux-amd64.tar.gz
 
+COPY railway.conf /etc/nginx/conf.d/railway.conf
 COPY start-railway.sh /usr/local/bin/start-railway.sh
 
 RUN chmod +x /usr/local/bin/start-railway.sh
