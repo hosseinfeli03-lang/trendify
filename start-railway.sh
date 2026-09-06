@@ -8,15 +8,6 @@ echo "======================================"
 mkdir -p /data/x-ui
 chmod 700 /data/x-ui
 
-# استفاده از دیتابیس موجود روی Railway Volume
-if [ ! -f /data/x-ui/x-ui.db ]; then
-    mkdir -p /etc/x-ui
-fi
-
-# اتصال مسیر دیتابیس 3X-UI به Railway Volume
-rm -rf /etc/x-ui
-ln -s /data/x-ui /etc/x-ui
-
 PORT="${PORT:-8080}"
 
 echo "Port: ${PORT}"
@@ -24,7 +15,7 @@ echo "Database: /data/x-ui"
 
 cd /usr/local/x-ui
 
-echo "Configuring panel port..."
+echo "Configuring panel..."
 
 ./x-ui setting -port "$PORT" || true
 ./x-ui setting -listenIP "0.0.0.0" || true
